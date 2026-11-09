@@ -14,7 +14,6 @@ Example
 
     id: myjob
     time_limit: 60 # seconds
-    proxy: 127.0.0.1:8000 # point at warcprox for archiving
     ignore_robots: false
     max_claimed_sites: 2
     warcprox_meta:
@@ -107,6 +106,20 @@ Puts a cap on the number of sites belonging to a given job that can be brozzled
 simultaneously across the cluster. Addresses the problem of a job with many
 seeds starving out other jobs.
 
+``pdfs_only``
+~~~~~~~~~~~~~~~~~~~~~
++---------+----------+-----------+
+| type    | required | default   |
++=========+==========+===========+
+| boolean | no       | ``false`` |
++---------+----------+-----------+
+Limits capture to PDFs based on the MIME type set in the HTTP response's
+Content-Type header. This value only impacts processing of outlinks within
+Brozzler.
+
+*Note: Ensuring comprehensive limiting to only PDFs requires an additional
+entry in the Warcprox-Meta header `mime-type-filters` key.*
+
 ``seeds``
 ~~~~~~~~~
 +------------------------+----------+---------+
@@ -158,6 +171,25 @@ other fields like checkboxes and/or hidden fields, brozzler will leave
 the default values in place. Brozzler submits login forms after page load.
 Then brozzling proceeds as usual.
 
+``video_capture``
+~~~~~~~~~~~~~~~~~
++--------+----------+--------------------------+
+| type   | required | default                  |
++========+==========+==========================+
+| string | yes      | ``ENABLE_VIDEO_CAPTURE`` |
++--------+----------+--------------------------+
+Determines the level of video capture for the seed. This is an enumeration with four possible values:
+
+* ENABLE_VIDEO_CAPTURE (default): All video is captured.
+* DISABLE_VIDEO_CAPTURE: No video is captured. This is effectively a
+  combination of the next two values.
+* BLOCK_VIDEO_MIME_TYPES: Any response with a Content-Type header containing
+  the word "video" is not captured.
+* DISABLE_YTDLP_CAPTURE: Video capture via yt-dlp is disabled.
+
+*Note: Ensuring full video MIME type blocking requires an additional entry in
+the Warcprox-Meta header `mime-type-filters` key.*
+
 Seed-level / top-level settings
 -------------------------------
 These are seed settings that can also be specified at the top level, in which
@@ -185,16 +217,6 @@ Time limit in seconds. If not specified, there is no time limit. Time limit is
 enforced at the seed level. If a time limit is specified at the top level, it
 is inherited by each seed as described above, and enforced individually on each
 seed.
-
-``proxy``
-~~~~~~~~~
-+--------+----------+---------+
-| type   | required | default |
-+========+==========+=========+
-| string | no       | *none*  |
-+--------+----------+---------+
-HTTP proxy, with the format ``host:port``. Typically configured to point to
-warcprox for archival crawling.
 
 ``ignore_robots``
 ~~~~~~~~~~~~~~~~~
@@ -226,8 +248,8 @@ to contact the operator if the crawl is causing problems.
 +============+==========+===========+
 | dictionary | no       | ``false`` |
 +------------+----------+-----------+
-Specifies the ``Warcprox-Meta`` header to send with every request, if ``proxy``
-is configured. The value of the ``Warcprox-Meta`` header is a json blob. It is
+Specifies the ``Warcprox-Meta`` header to send with every request, if warcprox
+is enabled. The value of the ``Warcprox-Meta`` header is a json blob. It is
 used to pass settings and information to warcprox. Warcprox does not forward
 the header on to the remote site. For further explanation of this field and
 its uses see
